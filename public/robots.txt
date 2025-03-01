@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://control.weboko.net/sitemap.xml
