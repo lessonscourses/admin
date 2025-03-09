@@ -1,131 +1,89 @@
 <script setup>
 import { UploadFilled } from "@element-plus/icons-vue";
+
 definePageMeta({
   middleware: "auth",
   layout: "custom",
 });
 
-// const pageTotal = ref(0)
-const sortPage = ref(0);
+const sortPage = computed(() => (currentPage.value - 1) * pageSize.value);
 const currentPage = ref(1);
 const pageSize = ref(4);
 const drawer = ref(false);
 const buttonEdit = ref(false);
 const dell = ref({});
 const imfArr = ref([]);
-const form = ref({
-  email: "",
-  username: "",
-  password: "",
-  id_user: "",
-  userData: [
-    {
-      date_registration: "",
-      activation_date: "",
-      activation_get: "",
-      img: [],
-      status: false,
-      blocking: false,
-      verification: false,
-    },
-  ],
-});
-const {
-  data: users,
-  error,
-  refresh,
-} = await useFetch("/api/users/", {
+const form = ref(getEmptyForm());
+
+const { data: users, refresh } = await useFetch("/api/users/", {
   method: "POST",
-  headers: {
-    "Content-Type": "application/json; charset=UTF-8",
-  },
+  headers: { "Content-Type": "application/json; charset=UTF-8" },
   body: { sortPage, pageSize },
 });
-const addUser = async () => {
-  let updatecat = "api/update/updateuser";
-  console.log(form.value);
-  if (buttonEdit.value == true) {
-    updatecat = "api/add/addcategory";
-  }
-  const { data: responseData } = await useFetch(`/${updatecat}/`, {
+
+async function addUser() {
+  const url = buttonEdit.value
+    ? "/api/add/addcategory"
+    : "/api/update/updateuser";
+  const { data: responseData } = await useFetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-    },
+    headers: { "Content-Type": "application/json; charset=UTF-8" },
     body: form.value,
   });
+
   if (responseData) {
     refresh();
-    form.value = {
-      email: "",
-      username: "",
-      password: "",
-      id_user: "",
-      userData: [
-        {
-          date_registration: "",
-          activation_date: "",
-          activation_get: "",
-          img: [],
-          status: false,
-          blocking: false,
-          verification: false,
-        },
-      ],
-    };
-    imfArr.value = [];
-    if (form.value.userData[0].img.length > 0) {
-      form.value.userData[0].img = [];
-    }
+    form.value = getEmptyForm();
   }
-};
-const drawerDel = async (id) => {
-  dell.value = id;
+}
 
+async function drawerDel(id) {
   const responseData = await $fetch("/api/delete/daleteuser/", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=UTF-8",
-    },
-    body: dell.value,
+    headers: { "Content-Type": "application/json; charset=UTF-8" },
+    body: { _id: id },
   });
-  if (responseData) {
-    refresh();
-  }
-};
-const drawerIn = (item) => {
+
+  if (responseData) refresh();
+}
+
+function drawerIn(item) {
   form.value = {
     email: item.email || "",
     username: item.username || "",
     password: item.password || "",
     id_user: item.id_user || "",
     _id: item._id,
-    userData: [
-      {
-        date_registration: item?.userData?.[0]?.date_registration
-          ? timeFun(item.userData[0].date_registration)
-          : "",
-        activation_date: item?.userData?.[0]?.activation_date || "",
-        activation_get: item?.userData?.[0]?.activation_get || "",
-        img: item?.userData?.[0]?.img || [],
-        status: item?.userData?.[0]?.status || false,
-        blocking: item?.userData?.[0]?.blocking || false,
-        verification: item?.userData?.[0]?.verification || false,
-      },
-    ],
+    userData: [getUserData(item?.userData?.[0])],
   };
 
   imfArr.value = form.value.userData[0].img;
   drawer.value = true;
   buttonEdit.value = false;
-};
+}
 
-const drawerNull = () => {
+function getUserData(data = {}) {
+  return {
+    date_registration: data.date_registration
+      ? new Date(data.date_registration)
+      : null,
+    activation_date: data.activation_date
+      ? new Date(data.activation_date)
+      : null,
+    activation_get: data.activation_get ? new Date(data.activation_get) : null,
+    img: data.img || [],
+    status: data.status || false,
+    blocking: data.blocking || false,
+    verification: data.verification || false,
+  };
+}
+function drawerNull() {
   drawer.value = true;
   buttonEdit.value = true;
-  form.value = {};
-};
-const addImg = (file) => {
+  form.value = getEmptyForm();
+}
+
+function addImg(file) {
   const reader = new FileReader();
   reader.onload = (event) => {
     form.value.userData[0].img.push({
@@ -134,7 +92,17 @@ const addImg = (file) => {
     });
   };
   reader.readAsDataURL(file);
-};
+}
+
+function getEmptyForm() {
+  return {
+    email: "",
+    username: "",
+    password: "",
+    id_user: "",
+    userData: [getUserData()],
+  };
+}
 const handleCurrentChange = (val) => {
   if (val == 1) {
     sortPage.value = 0;
@@ -143,19 +111,6 @@ const handleCurrentChange = (val) => {
   }
   currentPage.value = val;
   refresh();
-};
-
-const timeFun = (newValue) => {
-  const currentDate = new Date(newValue);
-  const day = currentDate.getDate().toString().padStart(2, "0");
-  const month = (currentDate.getMonth() + 1).toString().padStart(2, "0");
-  const year = currentDate.getFullYear();
-  const hours = currentDate.getHours().toString().padStart(2, "0");
-  const minutes = currentDate.getMinutes().toString().padStart(2, "0");
-  const seconds = currentDate.getSeconds().toString().padStart(2, "0");
-
-  const formattedDateTime = `${day}.${month}.${year}, ${hours}:${minutes}:${seconds}`;
-  return formattedDateTime;
 };
 </script>
 
