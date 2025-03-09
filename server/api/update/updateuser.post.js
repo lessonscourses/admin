@@ -14,15 +14,17 @@ export default defineEventHandler(async (event) => {
     // Обновляем данные пользователя в UserModel
     const userUpdateResult = await UserModel.replaceOne(userObj, data);
 
-    // Используем id_user для поиска userData
-    const userDataUpdateResult = await UserDataModel.replaceOne(
-      userDataObj,
-      userData
+    // Обновляем или создаем запись в UserDataModel
+    const userDataUpdateResult = await UserDataModel.findOneAndUpdate(
+      userDataObj, // Условие поиска (ищем по id_user)
+      { $set: userData }, // Обновляемые данные
+      { upsert: true, new: true } // upsert создаст новую запись, если её нет
     );
 
-    // Возвращаем результат обновления пользователя в UserModel
-    return userUpdateResult;
+    // Возвращаем результат обновления
+    return { userUpdateResult, userDataUpdateResult };
   } catch (err) {
-    console.log(err);
+    console.error(err);
+    throw createError({ statusCode: 500, message: "Ошибка обновления данных" });
   }
 });

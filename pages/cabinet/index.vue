@@ -94,26 +94,28 @@ const drawerDel = async (id) => {
   }
 };
 const drawerIn = (item) => {
-  form.value._id = item._id;
-  (form.value.email = item.email),
-    (form.value.password = item.password),
-    (form.value.username = item.username),
-    (imfArr.value = []);
+  form.value = {
+    email: item.email || "",
+    username: item.username || "",
+    password: item.password || "",
+    id_user: item.id_user || "",
+    _id: item._id,
+    userData: [
+      {
+        date_registration: item?.userData?.[0]?.date_registration
+          ? timeFun(item.userData[0].date_registration)
+          : "",
+        activation_date: item?.userData?.[0]?.activation_date || "",
+        activation_get: item?.userData?.[0]?.activation_get || "",
+        img: item?.userData?.[0]?.img || [],
+        status: item?.userData?.[0]?.status || false,
+        blocking: item?.userData?.[0]?.blocking || false,
+        verification: item?.userData?.[0]?.verification || false,
+      },
+    ],
+  };
 
-  if (item.userData && item.userData.length > 0) {
-    for (let itemIn in item.userData[0]) {
-      form.value.userData[0][itemIn] = item.userData[0][itemIn];
-      if (itemIn == "date_registration") {
-        form.value.userData[0][itemIn] = timeFun(item.userData[0][itemIn]);
-        console.log(form.value.userData[0][itemIn]);
-      }
-    }
-    if (form.value.userData[0].img.length > 0) {
-      form.value.userData[0].img = item.userData[0].img;
-      imfArr.value = item.userData[0].img;
-    }
-  }
-
+  imfArr.value = form.value.userData[0].img;
   drawer.value = true;
   buttonEdit.value = false;
 };
